@@ -20,6 +20,11 @@ async def handle_data(reader, writer):
         client = [writer, client_id, username]
         print(username+" has connected!")
         clients.append(client)
+
+        for cl in clients:
+            user = (cl[1]+",USER,"+cl[2]).encode()
+            writer.write(user)
+
         data = "".encode()
 
     if data.decode() != "":

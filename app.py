@@ -1,11 +1,11 @@
 import tkinter as tk
 import asyncio
 from client import AsyncronousClient
-import re
 
 BG_GRAY = "#ABB2B9"
 BG_COLOR = "#17202A"
 TEXT_COLOR = "#EAECEE"
+CHAT_COLOR = "#000000"
 
 FONT = "Helvetica 14"
 FONT_BOLD = "Helvetica 13 bold"
@@ -85,42 +85,52 @@ class ChatApplication:
                    padx=10)
 
     def setup_main_window(self):
-        self.window.geometry("470x550")
+        self.window.configure(background=BG_COLOR)
+        self.window.resizable(False, False)
 
         # head label
         head_label = tk.Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
-                              text="Welcome", font=FONT_BOLD, pady=10)
-        head_label.place(relwidth=1)
+                              text="Welcome", font=FONT_BOLD,
+                              width=50)
+        head_label.grid(column=0, row=0, padx=5, pady=10)
 
-        # tiny divider
-        line = tk.Label(self.window, width=450, bg=BG_GRAY)
-        line.place(relwidth=1, rely=0.07, relheight=0.012)
+        # users label
+        users_label = tk.Label(self.window, bg=BG_GRAY, fg=TEXT_COLOR,
+                               text="Users", font=FONT_BOLD,
+                               width=15)
+        users_label.grid(column=1, row=0, pady=10)
+
+        # users widget
+        self.users_widget = tk.Text(self.window, width=15, height=20, bg=BG_COLOR, fg=TEXT_COLOR,
+                                    font=FONT)
+        self.users_widget.grid(column=1, row=1)
+        self.users_widget.configure(cursor="arrow", state=tk.DISABLED)
 
         # text widget
-        self.text_widget = tk.Text(self.window, width=20, height=2, bg=BG_COLOR, fg=TEXT_COLOR,
-                                   font=FONT, padx=5, pady=5)
-        self.text_widget.place(relheight=0.745, relwidth=1, rely=0.08)
+        self.text_widget = tk.Text(self.window, width=45, height=20, bg=BG_GRAY, fg=CHAT_COLOR,
+                                   font=FONT)
+        self.text_widget.grid(column=0, row=1)
         self.text_widget.configure(cursor="arrow", state=tk.DISABLED)
 
         # scroll bar
         scrollbar = tk.Scrollbar(self.text_widget)
-        scrollbar.place(relheight=1, relx=0.974)
+        scrollbar.place(relheight=1, relx=0.967)
         scrollbar.configure(command=self.text_widget.yview)
 
         # bottom label
-        bottom_label = tk.Label(self.window, bg=BG_GRAY, height=80)
-        bottom_label.place(relwidth=1, rely=0.825)
+        bottom_label = tk.Label(self.window, bg=BG_GRAY)
+        bottom_label.grid(column=0, row=2, padx=5, pady=5)
 
         # message entry box
-        self.msg_entry = tk.Entry(bottom_label, bg="#2C3E50", fg=TEXT_COLOR, font=FONT)
-        self.msg_entry.place(relwidth=0.74, relheight=0.06, rely=0.008, relx=0.011)
+        self.msg_entry = tk.Entry(bottom_label, bg="#2C3E50", fg=TEXT_COLOR, font=FONT, width=30)
+        self.msg_entry.grid(column=0, row=0)
         self.msg_entry.focus()
         self.msg_entry.bind("<Return>", self.on_msg_enter)
 
         # send button
-        send_button = tk.Button(bottom_label, text="Send", font=FONT_BOLD, width=20, bg=BG_GRAY, command=self.
+        send_button = tk.Button(bottom_label, text="Send", font=FONT_BOLD, width=5, bg=BG_GRAY, command=self.
                                 send_message)
-        send_button.place(relx=0.77, rely=0.008, relheight=0.06, relwidth=0.22)
+        send_button.grid(column=1, row=0, sticky=tk.E, padx=5, pady=5)
 
     # Widget Code
     def ip_character_limit(self, entry_text):
@@ -219,12 +229,18 @@ class ChatApplication:
             message = dataList[1]
             username = dataList[2]
 
-            msg = f"{username}: {message}\n"
+            if message == 'USER':
+                self.users_widget.configure(state=tk.NORMAL)
+                self.users_widget.insert(tk.INSERT, username)
+                self.users_widget.configure(state=tk.DISABLED)
+            else:
+                msg = f"{username}: {message}\n"
 
-            print(msg)
+                print(msg)
 
-            self.text_widget.configure(state=tk.NORMAL)
-            self.text_widget.insert(tk.INSERT, msg)
+                self.text_widget.configure(state=tk.NORMAL)
+                self.text_widget.insert(tk.INSERT, msg)
+                self.text_widget.configure(state=tk.DISABLED)
 
     # Close Handling
     def close_login(self):
