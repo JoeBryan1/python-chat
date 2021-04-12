@@ -20,7 +20,6 @@ class AsyncronousClient:
 
     async def receive_message(self, fut):
         data = await self.reader.read(1024)
-        print(data)
         fut.set_result(data)
 
     async def handle_connection(self, username, HOST):

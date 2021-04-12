@@ -22,8 +22,12 @@ async def handle_data(reader, writer):
         clients.append(client)
 
         for cl in clients:
-            user = (cl[1]+",USER,"+cl[2]).encode()
-            writer.write(user)
+            for user in clients:
+                user = (user[1]+",USER,"+user[2])
+                writer = cl[0]
+                writer.write(user.encode())
+                await writer.drain()
+                await asyncio.sleep(1/120)
 
         data = "".encode()
 

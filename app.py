@@ -13,8 +13,10 @@ FONT_BOLD = "Helvetica 13 bold"
 
 class ChatApplication:
 
-    def __init__(self, interval=1 / 120):
+    def __init__(self):
         super().__init__()
+
+        self.interval = 1/120
 
         self.window = tk.Tk()
         self.window.title("Joe's Chat Room")
@@ -26,7 +28,7 @@ class ChatApplication:
         self.ac = AsyncronousClient()
 
         self.tasks = []
-        self.tasks.append(self.loop.create_task(self.updater(interval)))
+        self.tasks.append(self.loop.create_task(self.updater(self.interval)))
         self.loop.run_forever()
 
     async def updater(self, interval):
@@ -204,9 +206,6 @@ class ChatApplication:
 
         self.ip = (ip_1+"."+ip_2+"."+ip_3+"."+ip_4)
 
-        print(self.ip)
-        print(self.username)
-
         if self.username != "":
             self.tasks.append(self.loop.create_task(self.handle_client()))
             self.close_login()
@@ -218,6 +217,7 @@ class ChatApplication:
         self.tasks.append(self.loop.create_task(self.receive_message()))
 
     async def receive_message(self):
+        userlist = []
         while True:
             self.fut = self.loop.create_future()
             loopTask = self.loop.create_task(self.ac.receive_message(self.fut))
@@ -230,13 +230,18 @@ class ChatApplication:
             username = dataList[2]
 
             if message == 'USER':
-                self.users_widget.configure(state=tk.NORMAL)
-                self.users_widget.insert(tk.INSERT, username)
-                self.users_widget.configure(state=tk.DISABLED)
+                user = (client_id, username)
+
+                if user not in userlist:
+                    userlist.append(user)
+                    await asyncio.sleep(self.interval)
+
+                    self.users_widget.configure(state=tk.NORMAL)
+                    self.users_widget.insert(tk.INSERT, user[1] + "\n")
+                    self.users_widget.configure(state=tk.DISABLED)
+
             else:
                 msg = f"{username}: {message}\n"
-
-                print(msg)
 
                 self.text_widget.configure(state=tk.NORMAL)
                 self.text_widget.insert(tk.INSERT, msg)
