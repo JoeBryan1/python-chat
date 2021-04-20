@@ -1,5 +1,6 @@
 import asyncio
 import uuid
+import re
 
 
 class AsyncronousClient:
@@ -9,26 +10,38 @@ class AsyncronousClient:
         self.HOST = ""
         self.client_id = uuid.uuid4()
         self.reader = None
+        self.RECEIVE = 'RECEIVE'
 
-    async def send_message(self, username, user_input):
+    def construct_message(self, client_id, msg, username):
+        message = ('"' + str(client_id) + '","' + str(msg) + ',"' + str(username) + '"')
+        return message
+
+    async def send_message(self, username, msg):
         reader, writer = await asyncio.open_connection(self.HOST, self.PORT)
 
         # Sending message (id, message, username)
-        message = (str(self.client_id)+","+str(user_input)+","+str(username))
+        message = self.construct_message(self.client_id, msg, username)
         writer.write(message.encode())
         await writer.drain()
 
     async def receive_message(self, fut):
         data = await self.reader.read(1024)
-        fut.set_result(data)
 
-    async def handle_connection(self, username, HOST):
-        self.HOST = HOST
+        data_list = re.split(r',(?=")', data.decode())
+
+        for n, i in enumerate(data_list):
+            i = re.sub('"', '', i)
+            data_list[n] = i
+
+        fut.set_result(data_list)
+
+    async def handle_connection(self, username, host):
+        self.HOST = host
         self.reader, writer = await asyncio.open_connection(self.HOST, self.PORT)
         print(f"Connected to ('{self.HOST}', {self.PORT})")
 
         # Sending connection message(id, conn_identifier, username)
-        message = (str(self.client_id)+",RECEIVE,"+str(username))
+        message = ('"'+str(self.client_id)+'","'+self.RECEIVE+'","'+str(username)+'"')
         writer.write(message.encode())
 
 

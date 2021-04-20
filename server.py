@@ -1,57 +1,83 @@
 import asyncio
 import socket
+import re
 
 clients = []
 
 
-async def handle_data(reader, writer):
+class Server:
+    def __init__(self):
+        self.USER = 'USER'
+        self.clients = []
+        self.typing_clients = []
 
-    data = await reader.read(1024)
-    client_data = data.decode()
+        self.interval = 1/120
 
-    # Client Data (id, message, username)
-    client_data = client_data.split(",")
+    async def handle_data(self, reader, writer):
 
-    client_id = client_data[0]
-    message = client_data[1]
-    username = client_data[2]
+        data = await reader.read(1024)
+        client_data = data.decode()
 
-    if message == "RECEIVE":
-        client = [writer, client_id, username]
-        print(username+" has connected!")
-        clients.append(client)
+        # Client Data (id, message, username)
+        client_data = re.split(r',(?=")', client_data)
 
-        for cl in clients:
-            for user in clients:
-                user = (user[1]+",USER,"+user[2])
-                writer = cl[0]
-                writer.write(user.encode())
+        for n, i in enumerate(client_data):
+            i = re.sub('"', '', i)
+            client_data[n] = i
+
+        client_id = client_data[0]
+        message = client_data[1]
+        username = client_data[2]
+
+        if message == 'RECEIVE':
+            client = [writer, client_id, username]
+            print(username+" has connected!")
+            self.clients.append(client)
+
+            for cl in self.clients:
+                for user in self.clients:
+                    user = ('"'+user[1]+'","'+self.USER+'","'+user[2]+'"')
+                    writer = cl[0]
+                    writer.write(user.encode())
+                    await writer.drain()
+                    await asyncio.sleep(1/120)
+
+        elif message == 'TYPING':
+            for client in self.clients:
+                writer = client[0]
+                writer.write(data)
                 await writer.drain()
-                await asyncio.sleep(1/120)
+                await asyncio.sleep(1 / 120)
 
-        data = "".encode()
+        elif message == 'NOT TYPING':
+            for client in self.clients:
+                writer = client[0]
+                writer.write(data)
+                await writer.drain()
+                await asyncio.sleep(1 / 120)
 
-    if data.decode() != "":
-        print(username+': '+message)
-        for client in clients:
-            writer = client[0]
-            writer.write(data)
-            await writer.drain()
+        else:
+            print(username+': '+message)
+            for client in self.clients:
+                writer = client[0]
+                writer.write(data)
+                await writer.drain()
+
+    async def start_server(self):
+        server = await asyncio.start_server(
+            self.handle_data, '0.0.0.0', 8888)
+
+        addr = server.sockets[0].getsockname()
+        print(f'Serving on {addr}')
+
+        hostname = socket.gethostname()
+        ip = socket.gethostbyname(hostname)
+        print(f'IP: {ip}')
+
+        async with server:
+            await server.serve_forever()
 
 
-async def start_server():
-    server = await asyncio.start_server(
-        handle_data, '0.0.0.0', 8888)
-
-    addr = server.sockets[0].getsockname()
-    print(f'Serving on {addr}')
-
-    hostname = socket.gethostname()
-    ip = socket.gethostbyname(hostname)
-    print(f'IP: {ip}')
-
-    async with server:
-        await server.serve_forever()
-
-
-asyncio.run(start_server())
+if __name__ == "__main__":
+    s = Server()
+    asyncio.run(s.start_server())
