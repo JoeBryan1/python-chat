@@ -2,19 +2,28 @@ import asyncio
 import socket
 import re
 
-clients = []
-
 
 class Server:
     def __init__(self):
         self.USER = 'USER'
+        self.IS_TYPING = 'TYPING'
+        self.NOT_TYPING = 'NOT TYPING'
         self.clients = []
         self.typing_clients = []
 
         self.interval = 1/120
 
-    async def handle_data(self, reader, writer):
+    async def send_to_all(self, msg, client_list):
+        for cl in self.clients:
+            for user in client_list:
+                user = ('"' + user[0] + '","' + msg + '","' + user[1] + '"')
+                writer = cl[2]
+                writer.write(user.encode())
+                await writer.drain()
+                await asyncio.sleep(1 / 120)
 
+    async def handle_data(self, reader, writer):
+        loop = asyncio.get_event_loop()
         data = await reader.read(1024)
         client_data = data.decode()
 
@@ -30,36 +39,29 @@ class Server:
         username = client_data[2]
 
         if message == 'RECEIVE':
-            client = [writer, client_id, username]
+            client = [client_id, username, writer]
             print(username+" has connected!")
             self.clients.append(client)
 
-            for cl in self.clients:
-                for user in self.clients:
-                    user = ('"'+user[1]+'","'+self.USER+'","'+user[2]+'"')
-                    writer = cl[0]
-                    writer.write(user.encode())
-                    await writer.drain()
-                    await asyncio.sleep(1/120)
+            task = loop.create_task(self.send_to_all(self.USER, self.clients))
+            await task
+            task = loop.create_task(self.send_to_all(self.IS_TYPING, self.typing_clients))
+            await task
 
-        elif message == 'TYPING':
-            for client in self.clients:
-                writer = client[0]
-                writer.write(data)
-                await writer.drain()
-                await asyncio.sleep(1 / 120)
+        elif message == self.IS_TYPING:
+            self.typing_clients.append([client_id, username])
+            task = loop.create_task(self.send_to_all(self.IS_TYPING, self.typing_clients))
+            await task
 
-        elif message == 'NOT TYPING':
-            for client in self.clients:
-                writer = client[0]
-                writer.write(data)
-                await writer.drain()
-                await asyncio.sleep(1 / 120)
+        elif message == self.NOT_TYPING:
+            self.typing_clients.remove([client_id, username])
+            task = loop.create_task(self.send_to_all(self.NOT_TYPING, self.typing_clients))
+            await task
 
         else:
             print(username+': '+message)
             for client in self.clients:
-                writer = client[0]
+                writer = client[2]
                 writer.write(data)
                 await writer.drain()
 

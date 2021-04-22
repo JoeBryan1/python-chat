@@ -120,7 +120,7 @@ class ChatApplication:
 
     def setup_main_window(self):
         self.window.configure(background=BG_COLOR)
-        self.window.resizable(True, True)
+        self.window.resizable(False, False)
 
         # head label
         head_label = create_label(frame=self.window, label_text='Welcome',
@@ -290,59 +290,14 @@ class ChatApplication:
                     self.users_widget.configure(state=tk.DISABLED)
 
             elif message == 'TYPING':
-                self.typing_users.append(str(username))
-
-                typing_msg = ''
-
-                length = len(self.typing_users)
-
-                print(length)
-
-                if length > 0:
-                    if length == 2:
-                        typing_msg = self.typing_users[0] + ' and ' + self.typing_users[1] + ' are typing!'
-                    elif length > 1:
-                        counter = 1
-                        for username in self.typing_users:
-                            if length == counter:
-                                typing_msg = typing_msg + username
-                            else:
-                                typing_msg = typing_msg + username + ', '
-                                counter = counter + 1
-                        typing_msg = typing_msg + ' are typing!'
-                    else:
-                        typing_msg = username + ' is typing!'
-
-                    self.typing_widget.config(text=typing_msg)
+                if str(username) not in self.typing_users:
+                    self.typing_users.append(str(username))
+                    self.update_is_typing(username)
 
             elif message == 'NOT TYPING':
-                self.typing_users.remove(str(username))
-
-                typing_msg = ''
-
-                length = len(self.typing_users)
-
-                print(length)
-
-                if length > 0:
-                    if length == 2:
-                        typing_msg = self.typing_users[0] + ' and ' + self.typing_users[1] + ' are typing!'
-                    elif length > 1:
-                        counter = 1
-                        for username in self.typing_users:
-                            if length == counter:
-                                typing_msg = 'and ' + typing_msg + username
-                            else:
-                                typing_msg = typing_msg + username + ', '
-                                counter = counter + 1
-                        typing_msg = typing_msg + ' are typing!'
-                    else:
-                        typing_msg = username + ' is typing!'
-
-                    self.typing_widget.config(text=typing_msg)
-
-                else:
-                    self.typing_widget.config(text='')
+                if str(username) in self.typing_users:
+                    self.typing_users.remove(str(username))
+                    self.update_is_typing(username)
 
             else:
                 msg = f"{username}: {message}\n"
@@ -350,6 +305,33 @@ class ChatApplication:
                 self.text_widget.configure(state=tk.NORMAL)
                 self.text_widget.insert(tk.INSERT, msg)
                 self.text_widget.configure(state=tk.DISABLED)
+
+    def update_is_typing(self, username):
+        typing_msg = ''
+
+        length = len(self.typing_users)
+
+        print(length)
+
+        if length > 0:
+            if length == 2:
+                typing_msg = self.typing_users[0] + ' and ' + self.typing_users[1] + ' are typing!'
+            elif length > 1:
+                counter = 1
+                for username in self.typing_users:
+                    if length == counter:
+                        typing_msg = typing_msg + 'and ' + username
+                    else:
+                        typing_msg = typing_msg + username + ', '
+                        counter = counter + 1
+                typing_msg = typing_msg + ' are typing!'
+            else:
+                typing_msg = username + ' is typing!'
+
+            self.typing_widget.config(text=typing_msg)
+
+        else:
+            self.typing_widget.config(text='')
 
     # Close Handling
     def close_login(self):
