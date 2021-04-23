@@ -3,7 +3,12 @@ import uuid
 import re
 
 
-class AsyncronousClient:
+def construct_message(client_id, msg, username):
+    message = ('"' + str(client_id) + '","' + str(msg) + ',"' + str(username) + '"')
+    return message
+
+
+class AsynchronousClient:
     def __init__(self):
         self.loop = asyncio.get_event_loop()
         self.PORT = 8888
@@ -12,15 +17,11 @@ class AsyncronousClient:
         self.reader = None
         self.RECEIVE = 'RECEIVE'
 
-    def construct_message(self, client_id, msg, username):
-        message = ('"' + str(client_id) + '","' + str(msg) + ',"' + str(username) + '"')
-        return message
-
     async def send_message(self, username, msg):
         reader, writer = await asyncio.open_connection(self.HOST, self.PORT)
 
         # Sending message (id, message, username)
-        message = self.construct_message(self.client_id, msg, username)
+        message = construct_message(self.client_id, msg, username)
         writer.write(message.encode())
         await writer.drain()
 
@@ -47,4 +48,4 @@ class AsyncronousClient:
 
 asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 if __name__ == "__main__":
-    ac = AsyncronousClient()
+    ac = AsynchronousClient()

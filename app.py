@@ -1,6 +1,6 @@
 import tkinter as tk
 import asyncio
-from client import AsyncronousClient
+from client import AsynchronousClient
 
 BG_GRAY = "#ABB2B9"
 BG_COLOR = "#17202A"
@@ -58,7 +58,7 @@ class ChatApplication:
         self.empty_entry = asyncio.Event()
 
         self.loop = asyncio.get_event_loop()
-        self.ac = AsyncronousClient()
+        self.ac = AsynchronousClient()
         self.tasks = []
         self.tasks.append(self.loop.create_task(self.updater(self.interval)))
         self.loop.run_forever()
