@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 import asyncio
 from client import AsynchronousClient
 
@@ -22,17 +23,17 @@ def uname_character_limit(entry_text):
 
 
 def create_label(frame, label_text, label_column, label_row, label_width, pad_x=0, pad_y=10):
-    label = tk.Label(frame, bg=BG_COLOR, fg=TEXT_COLOR,
-                     text=label_text, font=FONT_BOLD,
-                     width=label_width)
+    label = ttk.Label(frame, background=BG_COLOR, foreground=TEXT_COLOR,
+                      text=label_text, font=FONT_BOLD,
+                      width=label_width)
     label.grid(column=label_column, row=label_row, pady=pad_y,
                padx=pad_x)
     return label
 
 
 def create_entry(entry_label, entry_func, entry_width, validation, entry_text):
-    entry = tk.Entry(entry_label, bg="#2C3E50", fg=TEXT_COLOR, font=FONT,
-                     width=entry_width, validate=validation, textvariable=entry_text)
+    entry = ttk.Entry(entry_label, background="#2C3E50", foreground=TEXT_COLOR, font=FONT,
+                      width=entry_width, validate=validation, textvariable=entry_text)
     entry.grid()
     entry.bind("<Return>", entry_func)
     return entry
@@ -46,9 +47,9 @@ class ChatApplication:
         self.interval = 1 / 120
 
         self.window = tk.Tk()
-        self.window.title("Joe's Chat Room")
         self.login_widgets = []
         self.main_widgets = []
+        self.initialise_window()
         self.setup_login()
 
         self.is_typing_msg = 'TYPING'
@@ -67,6 +68,16 @@ class ChatApplication:
         while True:
             tk.Tk.update(self.window)
             await asyncio.sleep(interval)
+
+    def initialise_window(self):
+        style = ttk.Style(self.window)
+        print(style.theme_names())
+
+        style.theme_use('default')
+
+        style.configure('TFrame', background=BG_COLOR)
+
+        self.window.title("Joe's Chat Room")
 
     def setup_login(self):
         self.window.configure(bg=BG_COLOR)
@@ -95,8 +106,8 @@ class ChatApplication:
                                 label_row=1, label_width=3)
         self.login_widgets.append(ip_label)
 
-        frame = tk.Frame(self.window)
-        frame.configure(bg=BG_COLOR)
+        frame = ttk.Frame(self.window)
+        frame.configure()
 
         # ip entry labels
 
